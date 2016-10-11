@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node web.js",
     "dev": "nodemon web.js",
-    "deploy": "git checkout deploy && git rebase master && git checkout master && git push cafe24 deploy",
+    "deploy": "git checkout deploy && git rebase master && git checkout master && git push -f cafe24 deploy",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

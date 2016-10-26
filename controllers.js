@@ -13,7 +13,7 @@ const { renderHeader
       , renderHelp
       }           = require('./output')
 
-const seoulApiUrl = 'http://openAPI.seoul.go.kr:8088/' + config.apiKey
+const seoulApiUrl = 'http://openAPI.seoul.go.kr:8088/' + config.apiKey + '/json'
 const districts = [ ['jongno',       'jongnogu',       '111123', '종로구']
                   , ['jung',         'junggu',         '111121', '중구']
                   , ['yongsan',      'yongsangu',      '111131', '용산구']
@@ -49,29 +49,30 @@ const codes = districts.reduce( (acc, x) => {
 
 const fetchSeoulData = () =>
   axios
-    .get(seoulApiUrl + '/json/ListAvgOfSeoulAirQualityService/1/5/')
+    .get(seoulApiUrl + '/ListAvgOfSeoulAirQualityService/1/5/')
     .then(x => x.data.ListAvgOfSeoulAirQualityService.row[0])
     .catch(err => { console.error(err) })
 
 const fetchDistrictData = code =>
   axios
-    .get(seoulApiUrl + '/json/ListAirQualityByDistrictService/1/5/' + code)
+    .get(seoulApiUrl + '/ListAirQualityByDistrictService/1/5/' + code)
     .then(x => x.data.ListAirQualityByDistrictService.row[0])
     .catch(err => { console.error(err) })
 
 const fetchPM10Forecast = () =>
   axios
-    .get(seoulApiUrl + '/json/ForecastWarningMinuteParticleOfDustService/1/1/')
+    .get(seoulApiUrl + '/ForecastWarningMinuteParticleOfDustService/1/1/')
     .then(x => x.data.ForecastWarningMinuteParticleOfDustService.row[0])
     .catch(err => { console.error(err) })
 
 const fetchPM25Forecast = () =>
   axios
-    .get( seoulApiUrl
-        + '/json/ForecastWarningUltrafineParticleOfDustService/1/5/'
-        )
+    .get(seoulApiUrl + '/ForecastWarningUltrafineParticleOfDustService/1/5/')
     .then(x => x.data.ForecastWarningUltrafineParticleOfDustService.row[0])
     .catch(err => { console.error(err) })
+
+const fetchForecasts = () =>
+  [ fetchPM10Forecast(), fetchPM25Forecast() ]
 
 const isTerminalAgent = userAgentStr =>
   /curl|wget|httpie|lwp-request/i.test(userAgentStr)
@@ -92,9 +93,8 @@ const showHelp = (req, res) => {
 }
 
 const deliverSeoulData = (req, res) => {
-  const seoul = fetchSeoulData()
-  const pm10  = fetchPM10Forecast()
-  const pm25  = fetchPM25Forecast()
+  const seoul          = fetchSeoulData()
+  const [ pm10, pm25 ] = fetchForecasts()
 
   Promise.all([ seoul, pm10, pm25 ])
     .then(([ seoulData, pm10Data, pm25Data ]) => {
@@ -115,9 +115,8 @@ const deliverDistrictData = (req, res) => {
   if (!stationCode)
     return showHelp(req, res)
 
-  const district    = fetchDistrictData(stationCode)
-  const pm10        = fetchPM10Forecast()
-  const pm25        = fetchPM25Forecast()
+  const district       = fetchDistrictData(stationCode)
+  const [ pm10, pm25 ] = fetchForecasts()
 
   Promise.all([ district, pm10, pm25 ])
     .then(([ districtData, pm10Data, pm25Data ]) => {
